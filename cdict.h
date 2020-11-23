@@ -91,8 +91,8 @@ typedef struct {
 } CDict;
 
 int cdict_init(CDict *s);
-CDictItem *cdict_add_pp(CDict *s, CDICT_TYPE_VAL *pval, CDICT_TYPE_KEY *pkey, int if_exists);
-CDictItem *cdict_add_vv(CDict *s, CDICT_TYPE_VAL val, CDICT_TYPE_KEY key, int if_exists);
+CDictItem *cdict_add_pp(CDict *s, CDICT_TYPE_KEY *pkey, CDICT_TYPE_VAL *pval, int if_exists);
+CDictItem *cdict_add_vv(CDict *s, CDICT_TYPE_KEY key, CDICT_TYPE_VAL val, int if_exists);
 CDICT_TYPE_VAL cdict_get_p(CDict *s, CDICT_TYPE_KEY *pkey);
 CDICT_TYPE_VAL cdict_get_v(CDict *s, CDICT_TYPE_KEY key);
 
@@ -153,7 +153,7 @@ int cdict_init(CDict *s) {
     }
 }
 
-CDictItem *cdict_add_pp(CDict *s, CDICT_TYPE_VAL *pval, CDICT_TYPE_KEY *pkey, int if_exists) {
+CDictItem *cdict_add_pp(CDict *s, CDICT_TYPE_KEY *pkey, CDICT_TYPE_VAL *pval, int if_exists) {
     CDICT_ASSERT(s);
     CDICT_ASSERT(pval);
     CDICT_ASSERT(pkey);
@@ -178,9 +178,9 @@ CDictItem *cdict_add_pp(CDict *s, CDICT_TYPE_VAL *pval, CDICT_TYPE_KEY *pkey, in
     return pit;
 }
 
-CDictItem *cdict_add_vv(CDict *s, CDICT_TYPE_VAL val, CDICT_TYPE_KEY key, int if_exists) {
+CDictItem *cdict_add_vv(CDict *s, CDICT_TYPE_KEY key, CDICT_TYPE_VAL val, int if_exists) {
     CDICT_ASSERT(s);
-    return cdict_add_pp(s, &val, &key, if_exists);
+    return cdict_add_pp(s, &key, &val, if_exists);
 }
 
 CDICT_TYPE_VAL cdict_get_p(CDict *s, CDICT_TYPE_KEY *pkey) {
