@@ -61,6 +61,11 @@ typedef char *CStr;
 #define CDICT_VAL_T CStr
 #endif
 
+/// Type of user data
+#ifndef CDICT_USER_DATA_T
+#define CDICT_USER_DATA_T void *
+#endif
+
 //
 // Public interface
 //
@@ -80,15 +85,18 @@ typedef struct CDictItem_s {
 
 typedef struct {
     CDictItem **hash_table;
-    void *user_data;
+    CDICT_USER_DATA_T user_data;
     int error_code;
 } CDict;
 
 /// Initializes dictionary structure
 int cdict_init(CDict *s);
 
-/// Initializes dictionary structure with non-NULL user data pointer
-int cdict_init_ud(CDict *s, void *user_data);
+/// Initializes dictionary structure with non-standard user data
+int cdict_init_ud(CDict *s, CDICT_USER_DATA_T user_data);
+
+/// Initializes dictionary structure with non-standard user data
+int cdict_init_pud(CDict *s, CDICT_USER_DATA_T *user_data);
 
 /// Inserts a value by key (receives pointers to val and key)
 CDictItem *cdict_add_pp(CDict *s, CDICT_KEY_T *pkey, CDICT_VAL_T *pval, int if_exists);
@@ -153,7 +161,7 @@ CDICT_VAL_T cdict_get_v(CDict *s, CDICT_KEY_T key);
 // The code
 //
 
-static size_t CDICT_HASH_FN(CDICT_KEY_T *pkey) {
+static size_t cdict_hash(CDICT_KEY_T *pkey) {
     return CDICT_HASH_FN(CDICT_ASSERT(pkey)) & CDICT_HASHTAB_SZ;
 }
 
@@ -162,7 +170,7 @@ static int cdict_keycmp(CDICT_KEY_T *pkey0, CDICT_KEY_T *pkey1) {
 }
 
 static CDictItem **cdict_chain_begin(CDict *s, CDICT_KEY_T *pkey) {
-    size_t hash = CDICT_HASH_FN(CDICT_ASSERT(pkey));
+    size_t hash = cdict_hash(CDICT_ASSERT(pkey));
     return &CDICT_ASSERT(s)->hash_table[hash];
 }
 
@@ -171,16 +179,22 @@ static CDictItem **cdict_chain_next(CDictItem **ppit) {
 }
 
 int cdict_init(CDict *s) {
-    cdict_init_ud(s, NULL);
+    return cdict_init_pud(s, NULL);
 }
 
-int cdict_init_ud(CDict *s, void *user_data) {
+int cdict_init_ud(CDict *s, CDICT_USER_DATA_T user_data) {
+    return cdict_init_pud(s, &user_data);
+}
+
+int cdict_init_pud(CDict *s, CDICT_USER_DATA_T *user_data) {
     CDICT_ASSERT(s);
-    s->user_data = user_data;
+    s->user_data = user_data ? *user_data : (CDICT_USER_DATA_T){ 0 };
     s->error_code = CDICT_ERR_SUCCESS;
     if (!(s->hash_table = CDICT_HASHTAB_ALLOC(s, sizeof(*s->hash_table) * CDICT_HASHTAB_SZ))) {
         s->error_code = CDICT_ERR_OUT_OF_MEMORY;
+        return 0;
     }
+    return 1;
 }
 
 CDictItem *cdict_add_pp(CDict *s, CDICT_KEY_T *pkey, CDICT_VAL_T *pval, int if_exists) {
@@ -231,22 +245,24 @@ CDICT_VAL_T cdict_get_v(CDict *s, CDICT_KEY_T key) {
 
 #endif
 
-#undef CDICT_PREFIX
-
 #undef CDICT_CAT2_IMPL
 #undef CDICT_CAT2
 #undef CDICT_FUN
 
 #undef cdict_init
+#undef cdict_init_ud
+#undef cdict_init_pud
 #undef cdict_add_pp
 #undef cdict_add_vv
 #undef cdict_get_p
 #undef cdict_get_v
 
-#ifdef CDICT_INST
-#undef CDICT_INST
 #undef CDICT_KEY_T
 #undef CDICT_VAL_T
+#undef CDICT_USER_DATA_T
+
+#ifdef CDICT_INST
+#undef CDICT_INST
 #undef CDICT_HASH_FN
 #undef CDICT_HASHTAB_SZ
 #undef CDICT_ASSERT_FN
