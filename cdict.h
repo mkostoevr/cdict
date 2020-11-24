@@ -35,11 +35,14 @@
 #define CDICT_FUN(name) CDICT_CAT2(cdict, CDICT_CAT2(CDICT_KEY_T, CDICT_CAT2(CDICT_VAL_T, name)))
 
 #define cdict_init CDICT_FUN(init)
+#define cdict_init_ud CDICT_FUN(init_ud)
+#define cdict_init_pud CDICT_FUN(init_pud)
 #define cdict_add_pp CDICT_FUN(add_pp)
 #define cdict_add_vv CDICT_FUN(add_vv)
 #define cdict_get_p CDICT_FUN(get_p)
 #define cdict_get_v CDICT_FUN(get_v)
 #define CDictItem CDICT_CAT2(CDictItem, CDICT_CAT2(CDICT_KEY_T, CDICT_VAL_T))
+#define CDictItem_s CDICT_CAT2(CDictItem_s, CDICT_CAT2(CDICT_KEY_T, CDICT_VAL_T))
 #define CDict CDICT_CAT2(CDict, CDICT_CAT2(CDICT_KEY_T, CDICT_VAL_T))
 
 //
@@ -78,7 +81,7 @@ typedef char *CStr;
 #define CDICT_ERR_OUT_OF_MEMORY 1
 
 typedef struct CDictItem_s {
-    struct CDictItem *next_collision;
+    struct CDictItem_s *next_collision;
     CDICT_KEY_T key;
     CDICT_VAL_T val;
 } CDictItem;
@@ -127,16 +130,21 @@ CDICT_VAL_T cdict_get_v(CDict *s, CDICT_KEY_T key);
 #define CDICT_HASHTAB_SZ 1024
 #endif
 
-/// Hash table allocator
+/// Hash table allocator MUST return zeroed buffer
 #ifndef CDICT_HASHTAB_ALLOC
 #include <stdlib.h>
 #define CDICT_HASHTAB_ALLOC(cdict, size) calloc(1, size)
 #endif
 
-/// New values allocator
-#ifndef CDICT_VAL_ALLOC
+/// New hash table items allocator (should be just a function call)
+#ifndef CDICT_HASHTAB_ITEM_ALLOC
 #include <stdlib.h>
-#define CDICT_VAL_ALLOC(cdict, size) malloc(size);
+#define CDICT_HASHTAB_ITEM_ALLOC_FN(cdict, size) malloc(size)
+#define CDICT_HASHTAB_ITEM_FREE_FN(cdict, ptr) free(ptr)
+#else
+#ifndef CDICT_HASHTAB_ITEM_FREE
+#error "CDICT_HASHTAB_ITEM_FREE should be defiend along with CDICT_HASHTAB_ITEM_ALLOC"
+#endif
 #endif
 
 /// Replacement for assert from <assert.h>
@@ -156,6 +164,13 @@ CDICT_VAL_T cdict_get_v(CDict *s, CDICT_KEY_T key);
 //
 
 #define CDICT_ASSERT(x) ({ CDICT_ASSERT_FN(x); x; })
+
+//
+// Predeclarations
+//
+
+void *CDICT_HASHTAB_ITEM_ALLOC(CDict *s, size_t size);
+void CDICT_HASHTAB_ITEM_FREE(CDict *s, CDictItem *ptr);
 
 //
 // The code
@@ -208,13 +223,13 @@ CDictItem *cdict_add_pp(CDict *s, CDICT_KEY_T *pkey, CDICT_VAL_T *pval, int if_e
             if (if_exists == CDICT_LEAVE_EXIST) {
                 return *ppit;
             } else if (if_exists == CDICT_REPLACE_EXIST) {
-                free(*ppit);
+                CDICT_HASHTAB_ITEM_FREE(s, *ppit);
                 break;
             }
         }
         ppit = cdict_chain_next(ppit);
     }
-    *ppit = CDICT_VAL_ALLOC(s, sizeof(**ppit));
+    *ppit = CDICT_HASHTAB_ITEM_ALLOC(s, sizeof(**ppit));
     CDictItem *pit = *ppit;
     pit->key = *pkey;
     pit->val = *pval;
