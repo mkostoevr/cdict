@@ -8,7 +8,10 @@
 
 int main(int argc, char **argv) {
 	CDict_CStr_CStr d;
-	cdict_CStr_CStr_init(&d);
+	if (!cdict_CStr_CStr_init(&d)) {
+		printf("Error #%d from CDict\n", d.error_code);
+		return 1;
+	}
 	cdict_CStr_CStr_add_vv(&d, "key_a", "val", CDICT_NO_CHECK);
 	cdict_CStr_CStr_add_vv(&d, "key_b", "another_val", CDICT_NO_CHECK);
 	cdict_CStr_CStr_add_vv(&d, "key_c", "yet_another_val", CDICT_NO_CHECK);

@@ -25,6 +25,7 @@ typedef struct {
 #define CDICT_USER_DATA_T UserData
 #define CDICT_HASHTAB_ITEM_ALLOC_FN(cdict, size) item_alloc(cdict, size)
 #define CDICT_HASHTAB_ITEM_FREE_FN(cdict, ptr) item_free(cdict, ptr)
+#define CDICT_HASHTAB_ALLOC_FN(cdict, size) hashtab_alloc(cdict, size)
 #include "cdict.h"
 
 //
@@ -33,7 +34,7 @@ typedef struct {
 
 void custom_item_allocator_init(Allocator *allocator) {
 	allocator->size = 0;
-	allocator->capacity = 1024;
+	allocator->capacity = 1024 * 24;
 	allocator->space = calloc(1, allocator->capacity);
 	if (!allocator->space) {
 		printf("Can't allocate space for items allocator");
@@ -51,6 +52,10 @@ void *item_alloc(CDict_CStr_CStr *s, size_t size) {
 	return res;
 }
 
+void *hashtab_alloc(CDict_CStr_CStr *s, size_t size) {
+	return item_alloc(s, size);
+}
+
 void item_free(CDict_CStr_CStr *s, CDictItem_CStr_CStr *ptr) {
 	return;
 }
@@ -64,7 +69,11 @@ int main(int argc, char **argv) {
 	custom_item_allocator_init(&ud.allocator);
 
 	CDict_CStr_CStr d;
-	cdict_CStr_CStr_init_pud(&d, &ud); // Give it the user data
+	// Give it the user data
+	if (!cdict_CStr_CStr_init_pud(&d, &ud)) {
+		printf("Error #%d from CDict\n", d.error_code);
+		return 1;
+	}
 	cdict_CStr_CStr_add_vv(&d, "key_a", "val", CDICT_NO_CHECK);
 	cdict_CStr_CStr_add_vv(&d, "key_b", "another_val", CDICT_NO_CHECK);
 	cdict_CStr_CStr_add_vv(&d, "key_c", "yet_another_val", CDICT_NO_CHECK);
