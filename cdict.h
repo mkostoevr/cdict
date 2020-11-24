@@ -3,70 +3,63 @@
 // You may use, distribute and modify this code under the terms of the MIT license.
 //
 // You should have received a copy of the MIT license with this file. If not, please visit
-// https://opensource.org/licenses/MIT for full license details.
+// https://opensource.org/licenses/MIT or boppan.org/MIT for full license details.
 
 // cdict.h - simple dictionaty implementation in C.
 //
 // Uses hash table with fixed (but configurable) size. Functions named using given type names:
-// cdict_<CDICT_TYPE_KEY>_<CDICT_TYPE_VAL>_<name>.
+// cdict_<CDICT_KEY_T>_<CDICT_VAL_T>_<name>.
 //
-// Configuration (definitions):
-// CDICT_TYPE_KEY:  Type of the dictionary's keys, named type only - used in functions names,
-//                  default: CStr (char *)
-// CDICT_TYPE_VAL:  Type of the dictionary's values, named type only - used in functions names,
-//                  default: CStr (char *)
-// CDICT_INST:      Instantiate the functions if defined
-// CDICT_HASH:      Hashing function for the key type, taking pointer to CDICT_TYPE_KEY as first
-//                  parameter, default is very simple (and for C strings)
-// CDICT_CMPF:      Function for comparsion of keys, return should be the same as memcmp, taking
-//                  two pointers to CDICT_TYPE_KEY, default: strcmp
-// CDICT_HTSZ:      Ammount of elements in hash table, default: 1024
-// CDICT_ASSERT_FN: Replacement for assert from <assert.h>, by default also prints file and line
+// See configuration below (in public "Input macros" section), also:
+// CDICT_INST: Instantiate the functions if defined.
 //
-// Minimal definitions for declaration: CDICT_TYPE_KEY, CDICT_TYPE_VAL
-// Minimal definitions for instantiation: CDICT_INST, CDICT_TYPE_KEY, CDICT_TYPE_VAL, CDICT_HASH,
-// CDICT_CMPF
+// Minimal definitions for declaration: CDICT_KEY_T, CDICT_VAL_T
+// Minimal definitions for instantiation: CDICT_INST, CDICT_KEY_T, CDICT_VAL_T, CDICT_HASH_FN,
+// CDICT_CMP_FN
 //
 // WARNING: All used definitions will be undefined on header exit.
 //
 // Dependencies:
-// <stddef.h> or another source of size_t
-// <stdlib.h> or another source of malloc, calloc and realloc
-// <assert.h> or another source of assert
+//  <stddef.h> or another source of size_t
+//  <stdlib.h> or another source of malloc, and calloc
+//  <assert.h> or another source of assert
 
 //
-// Input macros
-//
-
-#ifndef CDICT_TYPE_KEY
-    typedef char *CStr;
-#   define CDICT_CSTR_IS_THERE
-#   define CDICT_TYPE_KEY CStr
-#endif
-#ifndef CDICT_TYPE_VAL
-#   ifndef CDICT_CSTR_IS_THERE
-        typedef char *CStr;
-#   endif
-#   define CDICT_TYPE_VAL CStr
-#endif
-
-//
-// Internal macros
+// Internal macros for external declarations
 //
 
 #define CDICT_CAT2_IMPL(x, y) x ## _ ## y
 #define CDICT_CAT2(x, y) CDICT_CAT2_IMPL(x, y)
 
-/// Creates method name according to CDICT_TYPE_KEY and CDICT_TYPE_VAL
-#define CDICT_FUN(name) CDICT_CAT2(cdict, CDICT_CAT2(CDICT_TYPE_KEY, CDICT_CAT2(CDICT_TYPE_VAL, name)))
+/// Creates method name according to CDICT_KEY_T and CDICT_VAL_T
+#define CDICT_FUN(name) CDICT_CAT2(cdict, CDICT_CAT2(CDICT_KEY_T, CDICT_CAT2(CDICT_VAL_T, name)))
 
 #define cdict_init CDICT_FUN(init)
 #define cdict_add_pp CDICT_FUN(add_pp)
 #define cdict_add_vv CDICT_FUN(add_vv)
 #define cdict_get_p CDICT_FUN(get_p)
 #define cdict_get_v CDICT_FUN(get_v)
-#define CDictItem CDICT_CAT2(CDictItem, CDICT_CAT2(CDICT_TYPE_KEY, CDICT_TYPE_VAL))
-#define CDict CDICT_CAT2(CDict, CDICT_CAT2(CDICT_TYPE_KEY, CDICT_TYPE_VAL))
+#define CDictItem CDICT_CAT2(CDictItem, CDICT_CAT2(CDICT_KEY_T, CDICT_VAL_T))
+#define CDict CDICT_CAT2(CDict, CDICT_CAT2(CDICT_KEY_T, CDICT_VAL_T))
+
+//
+// Input macros
+//
+
+/// Type of the dictionary's keys, named type only - used in functions names, default: CStr
+#ifndef CDICT_KEY_T
+typedef char *CStr;
+#define CDICT_CSTR_IS_THERE
+#define CDICT_KEY_T CStr
+#endif
+
+/// Type of the dictionary's values, named type only - used in functions names, default: CStr
+#ifndef CDICT_VAL_T
+#ifndef CDICT_CSTR_IS_THERE
+typedef char *CStr;
+#endif
+#define CDICT_VAL_T CStr
+#endif
 
 //
 // Public interface
@@ -81,20 +74,33 @@
 
 typedef struct CDictItem_s {
     struct CDictItem *next_collision;
-    CDICT_TYPE_KEY key;
-    CDICT_TYPE_VAL val;
+    CDICT_KEY_T key;
+    CDICT_VAL_T val;
 } CDictItem;
 
 typedef struct {
     CDictItem **hash_table;
+    void *user_data;
     int error_code;
 } CDict;
 
+/// Initializes dictionary structure
 int cdict_init(CDict *s);
-CDictItem *cdict_add_pp(CDict *s, CDICT_TYPE_KEY *pkey, CDICT_TYPE_VAL *pval, int if_exists);
-CDictItem *cdict_add_vv(CDict *s, CDICT_TYPE_KEY key, CDICT_TYPE_VAL val, int if_exists);
-CDICT_TYPE_VAL cdict_get_p(CDict *s, CDICT_TYPE_KEY *pkey);
-CDICT_TYPE_VAL cdict_get_v(CDict *s, CDICT_TYPE_KEY key);
+
+/// Initializes dictionary structure with non-NULL user data pointer
+int cdict_init_ud(CDict *s, void *user_data);
+
+/// Inserts a value by key (receives pointers to val and key)
+CDictItem *cdict_add_pp(CDict *s, CDICT_KEY_T *pkey, CDICT_VAL_T *pval, int if_exists);
+
+/// Inserts a value by key (receives values of val and key)
+CDictItem *cdict_add_vv(CDict *s, CDICT_KEY_T key, CDICT_VAL_T val, int if_exists);
+
+/// Gives a value by key (receives a pointer to key)
+CDICT_VAL_T cdict_get_p(CDict *s, CDICT_KEY_T *pkey);
+
+/// Gives a vaule by key (receives a value of key)
+CDICT_VAL_T cdict_get_v(CDict *s, CDICT_KEY_T key);
 
 #ifdef CDICT_INST
 
@@ -102,23 +108,43 @@ CDICT_TYPE_VAL cdict_get_v(CDict *s, CDICT_TYPE_KEY key);
 // Input macros (instantiation edition)
 //
 
-#ifndef CDICT_HASH
-#define CDICT_HASH(pkey) strlen(*pkey) ^ (*pkey)[0]
+/// Hashing function for the key type
+#ifndef CDICT_HASH_FN
+#include <string.h>
+#define CDICT_HASH_FN(pkey) strlen(*pkey) ^ (*pkey)[0]
 #endif
-#ifndef CDICT_HTSZ
-#define CDICT_HTSZ 1024
+
+/// Ammount of pointers to elements in hash table
+#ifndef CDICT_HASHTAB_SZ
+#define CDICT_HASHTAB_SZ 1024
 #endif
+
+/// Hash table allocator
+#ifndef CDICT_HASHTAB_ALLOC
+#include <stdlib.h>
+#define CDICT_HASHTAB_ALLOC(cdict, size) calloc(1, size)
+#endif
+
+/// New values allocator
+#ifndef CDICT_VAL_ALLOC
+#include <stdlib.h>
+#define CDICT_VAL_ALLOC(cdict, size) malloc(size);
+#endif
+
+/// Replacement for assert from <assert.h>
 #ifndef CDICT_ASSERT_FN
 #include <assert.h>
 #define CDICT_ASSERT_FN(x) if (!x) { printf(__FILE__":%d: Disasserted", __LINE__); } assert(x);
 #endif
-#ifndef CDICT_CMPF
+
+/// Function for comparsion of keys, return should be the same as memcmp
+#ifndef CDICT_CMP_FN
 #include <string.h>
-#define CDICT_CMPF(pkey0, pkey1) strcmp(*pkey0, *pkey1)
+#define CDICT_CMP_FN(pkey0, pkey1) strcmp(*pkey0, *pkey1)
 #endif
 
 //
-// Interna macros (instantiation edition)
+// Internal macros (instantiation edition)
 //
 
 #define CDICT_ASSERT(x) ({ CDICT_ASSERT_FN(x); x; })
@@ -127,16 +153,16 @@ CDICT_TYPE_VAL cdict_get_v(CDict *s, CDICT_TYPE_KEY key);
 // The code
 //
 
-static size_t cdict_hash(CDICT_TYPE_KEY *pkey) {
-    return CDICT_HASH(CDICT_ASSERT(pkey)) & CDICT_HTSZ;
+static size_t CDICT_HASH_FN(CDICT_KEY_T *pkey) {
+    return CDICT_HASH_FN(CDICT_ASSERT(pkey)) & CDICT_HASHTAB_SZ;
 }
 
-static int cdict_keycmp(CDICT_TYPE_KEY *pkey0, CDICT_TYPE_KEY *pkey1) {
-    return CDICT_CMPF(CDICT_ASSERT(pkey0), CDICT_ASSERT(pkey1));
+static int cdict_keycmp(CDICT_KEY_T *pkey0, CDICT_KEY_T *pkey1) {
+    return CDICT_CMP_FN(CDICT_ASSERT(pkey0), CDICT_ASSERT(pkey1));
 }
 
-static CDictItem **cdict_chain_begin(CDict *s, CDICT_TYPE_KEY *pkey) {
-    size_t hash = cdict_hash(CDICT_ASSERT(pkey));
+static CDictItem **cdict_chain_begin(CDict *s, CDICT_KEY_T *pkey) {
+    size_t hash = CDICT_HASH_FN(CDICT_ASSERT(pkey));
     return &CDICT_ASSERT(s)->hash_table[hash];
 }
 
@@ -145,15 +171,19 @@ static CDictItem **cdict_chain_next(CDictItem **ppit) {
 }
 
 int cdict_init(CDict *s) {
+    cdict_init_ud(s, NULL);
+}
+
+int cdict_init_ud(CDict *s, void *user_data) {
     CDICT_ASSERT(s);
+    s->user_data = user_data;
     s->error_code = CDICT_ERR_SUCCESS;
-    s->hash_table = calloc(sizeof(*s->hash_table), CDICT_HTSZ);
-    if (!s->hash_table) {
+    if (!(s->hash_table = CDICT_HASHTAB_ALLOC(s, sizeof(*s->hash_table) * CDICT_HASHTAB_SZ))) {
         s->error_code = CDICT_ERR_OUT_OF_MEMORY;
     }
 }
 
-CDictItem *cdict_add_pp(CDict *s, CDICT_TYPE_KEY *pkey, CDICT_TYPE_VAL *pval, int if_exists) {
+CDictItem *cdict_add_pp(CDict *s, CDICT_KEY_T *pkey, CDICT_VAL_T *pval, int if_exists) {
     CDICT_ASSERT(s);
     CDICT_ASSERT(pval);
     CDICT_ASSERT(pkey);
@@ -170,7 +200,7 @@ CDictItem *cdict_add_pp(CDict *s, CDICT_TYPE_KEY *pkey, CDICT_TYPE_VAL *pval, in
         }
         ppit = cdict_chain_next(ppit);
     }
-    *ppit = malloc(sizeof(**ppit));
+    *ppit = CDICT_VAL_ALLOC(s, sizeof(**ppit));
     CDictItem *pit = *ppit;
     pit->key = *pkey;
     pit->val = *pval;
@@ -178,12 +208,12 @@ CDictItem *cdict_add_pp(CDict *s, CDICT_TYPE_KEY *pkey, CDICT_TYPE_VAL *pval, in
     return pit;
 }
 
-CDictItem *cdict_add_vv(CDict *s, CDICT_TYPE_KEY key, CDICT_TYPE_VAL val, int if_exists) {
+CDictItem *cdict_add_vv(CDict *s, CDICT_KEY_T key, CDICT_VAL_T val, int if_exists) {
     CDICT_ASSERT(s);
     return cdict_add_pp(s, &key, &val, if_exists);
 }
 
-CDICT_TYPE_VAL cdict_get_p(CDict *s, CDICT_TYPE_KEY *pkey) {
+CDICT_VAL_T cdict_get_p(CDict *s, CDICT_KEY_T *pkey) {
     CDICT_ASSERT(s);
     CDICT_ASSERT(pkey);
     for (CDictItem **ppit = cdict_chain_begin(s, pkey); *ppit; ppit = cdict_chain_next(ppit)) {
@@ -194,7 +224,7 @@ CDICT_TYPE_VAL cdict_get_p(CDict *s, CDICT_TYPE_KEY *pkey) {
     return NULL;
 }
 
-CDICT_TYPE_VAL cdict_get_v(CDict *s, CDICT_TYPE_KEY key) {
+CDICT_VAL_T cdict_get_v(CDict *s, CDICT_KEY_T key) {
     CDICT_ASSERT(s);
     return cdict_get_p(s, &key);
 }
@@ -215,11 +245,11 @@ CDICT_TYPE_VAL cdict_get_v(CDict *s, CDICT_TYPE_KEY key) {
 
 #ifdef CDICT_INST
 #undef CDICT_INST
-#undef CDICT_TYPE_KEY
-#undef CDICT_TYPE_VAL
-#undef CDICT_HASH
-#undef CDICT_HTSZ
+#undef CDICT_KEY_T
+#undef CDICT_VAL_T
+#undef CDICT_HASH_FN
+#undef CDICT_HASHTAB_SZ
 #undef CDICT_ASSERT_FN
-#undef CDICT_CMPF
+#undef CDICT_CMP_FN
 #undef CDICT_ASSERT
 #endif
