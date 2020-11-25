@@ -208,7 +208,7 @@ static int cdict_keycmp(CDICT_KEY_T *pkey0, CDICT_KEY_T *pkey1) {
 
 static CDictItem **cdict_chain_begin(CDict *s, CDICT_KEY_T *pkey) {
     size_t hash = cdict_hash(CDICT_ASSERT(pkey));
-    return &CDICT_ASSERT(s)->hash_table[hash];
+    return &CDICT_ASSERT(CDICT_ASSERT(s)->hash_table)[hash];
 }
 
 static CDictItem **cdict_chain_next(CDictItem **ppit) {
