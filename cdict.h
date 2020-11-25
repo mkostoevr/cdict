@@ -238,6 +238,7 @@ CDictItem *cdict_add_pp(CDict *s, CDICT_KEY_T *pkey, CDICT_VAL_T *pval, int if_e
     CDICT_ASSERT(s);
     CDICT_ASSERT(pval);
     CDICT_ASSERT(pkey);
+    CDictItem *next_collision = NULL;
     CDictItem **ppit = cdict_chain_begin(s, pkey);
     while (*ppit) {
         int exists = if_exists == CDICT_NO_CHECK ? 0 : !cdict_keycmp(pkey, &(*ppit)->key);
@@ -245,6 +246,7 @@ CDictItem *cdict_add_pp(CDict *s, CDICT_KEY_T *pkey, CDICT_VAL_T *pval, int if_e
             if (if_exists == CDICT_LEAVE_EXIST) {
                 return *ppit;
             } else if (if_exists == CDICT_REPLACE_EXIST) {
+                next_collision = (*ppit)->next_collision;
                 CDICT_HASHTAB_ITEM_FREE_FN(s, *ppit);
                 break;
             }
@@ -255,7 +257,7 @@ CDictItem *cdict_add_pp(CDict *s, CDICT_KEY_T *pkey, CDICT_VAL_T *pval, int if_e
     CDictItem *pit = *ppit;
     pit->key = *pkey;
     pit->val = *pval;
-    pit->next_collision = 0;
+    pit->next_collision = next_collision;
     return pit;
 }
 
