@@ -163,6 +163,8 @@ CDICT_VAL_T cdict_get_v(CDict *s, CDICT_KEY_T key);
 #ifndef CDICT_CMP_FN
 #include <string.h>
 #define CDICT_CMP_FN(pkey0, pkey1) strcmp(*pkey0, *pkey1)
+#else
+#define CDICT_CMP_FN_OVERRIDDEN
 #endif
 
 //
@@ -186,6 +188,10 @@ void *CDICT_HASHTAB_ALLOC_FN(CDict *s, size_t size);
 
 #ifdef CDICT_HASH_FN_OVERRIDEN
 unsigned long CDICT_HASH_FN(CDICT_KEY_T *pkey);
+#endif
+
+#ifdef CDICT_CMP_FN_OVERRIDDEN
+int CDICT_CMP_FN(CDICT_KEY_T *pkey0, CDICT_KEY_T *pkey1);
 #endif
 
 //
