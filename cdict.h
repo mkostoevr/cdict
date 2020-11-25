@@ -124,6 +124,8 @@ CDICT_VAL_T cdict_get_v(CDict *s, CDICT_KEY_T key);
 #ifndef CDICT_HASH_FN
 #include <string.h>
 #define CDICT_HASH_FN(pkey) strlen(*pkey) ^ (*pkey)[0]
+#else
+#define CDICT_HASH_FN_OVERRIDEN
 #endif
 
 /// Ammount of pointers to elements in hash table
@@ -180,6 +182,10 @@ void CDICT_HASHTAB_ITEM_FREE_FN(CDict *s, CDictItem *ptr);
 
 #ifdef CDICT_HASHTAB_ALLOCATORS_OVERRIDDEN
 void *CDICT_HASHTAB_ALLOC_FN(CDict *s, size_t size);
+#endif
+
+#ifdef CDICT_HASH_FN_OVERRIDEN
+unsigned long CDICT_HASH_FN(CDICT_KEY_T *pkey);
 #endif
 
 //
