@@ -199,7 +199,7 @@ int CDICT_CMP_FN(CDICT_KEY_T *pkey0, CDICT_KEY_T *pkey1);
 //
 
 static size_t cdict_hash(CDICT_KEY_T *pkey) {
-    return CDICT_HASH_FN(CDICT_ASSERT(pkey)) & CDICT_HASHTAB_SZ;
+    return CDICT_HASH_FN(CDICT_ASSERT(pkey)) & (CDICT_HASHTAB_SZ - 1);
 }
 
 static int cdict_keycmp(CDICT_KEY_T *pkey0, CDICT_KEY_T *pkey1) {
