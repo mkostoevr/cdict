@@ -8,12 +8,18 @@
 //
 
 #define CDICT_INST
+#define CDICT_HASH_FN(pkey) my_hash(pkey)
 #define CDICT_CMP_FN(pkey0, pkey1) my_cmp(pkey0, pkey1)
 #include "cdict.h"
 
 // Let's say, only the first byte is significant
 int my_cmp(char **pkey0, char **pkey1) {
 	return **pkey0 - **pkey1;
+}
+
+// We also should make a new hash function for that reason
+unsigned long my_hash(char **key) {
+	return **key;
 }
 
 //
