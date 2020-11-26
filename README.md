@@ -46,10 +46,15 @@ unsigned long my_hash(MyType *key) {
 
 Then to use the new dictionary you only need to define key type before the header inclusion:
 
- ```C
+```C
 #define CDICT_KEY_T MyType
 #include "cdict.h"
- ```
+
+// ...
+    CDict_MyType_CStr dict;
+    cdict_MyType_CStr_init(&dict);
+// ...
+```
 
 If you want to specify the type of values - just define the type:
 
