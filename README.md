@@ -39,7 +39,7 @@ int my_cmp(MyType *pkey0, MyType *pkey1) {
     // Return `whatever_negative` if `key0 < key1`, `0` if `key0 == key1` and `whatever_positive` if `key0 > key1` 
 }
 
-unsigned long my_hash(char **key) {
+unsigned long my_hash(MyType *key) {
     // Return the hash of the key
 }
 ```
