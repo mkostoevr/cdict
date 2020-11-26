@@ -32,13 +32,16 @@ int my_cmp(char *pkey0, char *pkey1) {
 
 int main(int argc, char **argv) {
 	CDict_char_CStr d;
-	if (!cdict_char_CStr_init(&d)) {
-		printf("Error #%d from CDict\n", d.error_code);
-		return 1;
-	}
+	cdict_char_CStr_init(&d);
 	cdict_char_CStr_add_vv(&d, 'a', "Letter 'A'", CDICT_NO_CHECK);
 	cdict_char_CStr_add_vv(&d, 'b', "Letter 'B'", CDICT_NO_CHECK);
 	cdict_char_CStr_add_vv(&d, 'c', "Letter 'C'", CDICT_NO_CHECK);
+
+	if (d.error_code != CDICT_ERR_SUCCESS) {
+		printf("Error #%d from CDict\n", d.error_code);
+		return 1;
+	}
+
 	printf("[a] = %s\n", cdict_char_CStr_get_v(&d, 'a'));
 	printf("[b] = %s\n", cdict_char_CStr_get_v(&d, 'b'));
 	printf("[c] = %s\n", cdict_char_CStr_get_v(&d, 'c'));

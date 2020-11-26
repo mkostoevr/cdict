@@ -80,6 +80,12 @@ typedef char *CStr;
 
 #define CDICT_ERR_SUCCESS 0
 #define CDICT_ERR_OUT_OF_MEMORY 1
+#define CDICT_ERR_THIS_IS_NULL 2
+#define CDICT_ERR_HASH_TABLE_IS_NULL 3
+#define CDICT_ERR_PKEY0_IS_NULL 4
+#define CDICT_ERR_PKEY1_IS_NULL 5
+#define CDICT_ERR_PKEY_IS_NULL 6
+#define CDICT_ERR_PVAL_IS_NULL 7
 
 typedef struct CDictItem_s {
     struct CDictItem_s *next_collision;
@@ -120,6 +126,11 @@ CDICT_VAL_T cdict_get_v(CDict *s, CDICT_KEY_T key);
 // Input macros (instantiation edition)
 //
 
+/// The value returned on some error
+#ifndef CDICT_VAL_DEFAULT
+#define CDICT_VAL_DEFAULT (CDICT_VAL_T){ 0 }
+#endif
+
 /// Hashing function for the key type
 #ifndef CDICT_HASH_FN
 #include <string.h>
@@ -156,7 +167,7 @@ CDICT_VAL_T cdict_get_v(CDict *s, CDICT_KEY_T key);
 /// Replacement for assert from <assert.h>
 #ifndef CDICT_ASSERT_FN
 #include <assert.h>
-#define CDICT_ASSERT_FN(x) if (!x) { printf(__FILE__":%d: Disasserted", __LINE__); } assert(x);
+#define CDICT_ASSERT_FN(x) if (!x) { printf(__FILE__":%d: Disasserted", __LINE__); } assert(x)
 #endif
 
 /// Function for comparsion of keys, return should be the same as memcmp
@@ -172,6 +183,12 @@ CDICT_VAL_T cdict_get_v(CDict *s, CDICT_KEY_T key);
 //
 
 #define CDICT_ASSERT(x) ({ CDICT_ASSERT_FN(x); x; })
+// Should write the error code into strucure, but should not rewrite it's already set
+#define CDICT_IF_NULL_SET_ERR_RETURN(x, ec, res) if (x == NULL) {   \
+        if (s->error_code == CDICT_ERR_SUCCESS) s->error_code = ec; \
+        return res;                                                 \
+    }
+#define CDICT_IF_NULL_RETURN(x, res) if (x == NULL) return res
 
 //
 // Predeclarations
@@ -207,12 +224,16 @@ static int cdict_keycmp(CDICT_KEY_T *pkey0, CDICT_KEY_T *pkey1) {
 }
 
 static CDictItem **cdict_chain_begin(CDict *s, CDICT_KEY_T *pkey) {
+    CDICT_ASSERT(s);
     size_t hash = cdict_hash(CDICT_ASSERT(pkey));
-    return &CDICT_ASSERT(CDICT_ASSERT(s)->hash_table)[hash];
+    CDICT_IF_NULL_SET_ERR_RETURN(s->hash_table, CDICT_ERR_HASH_TABLE_IS_NULL, NULL);
+    return &s->hash_table[hash];
 }
 
 static CDictItem **cdict_chain_next(CDictItem **ppit) {
-    return &CDICT_ASSERT(*CDICT_ASSERT(ppit))->next_collision;  
+    CDICT_ASSERT(ppit);
+    CDICT_ASSERT(*ppit);
+    return &(*ppit)->next_collision;  
 }
 
 int cdict_init(CDict *s) {
@@ -224,22 +245,21 @@ int cdict_init_ud(CDict *s, CDICT_USER_DATA_T user_data) {
 }
 
 int cdict_init_pud(CDict *s, CDICT_USER_DATA_T *user_data) {
-    CDICT_ASSERT(s);
+    CDICT_IF_NULL_RETURN(s, 0);
     s->user_data = user_data ? *user_data : (CDICT_USER_DATA_T){ 0 };
     s->error_code = CDICT_ERR_SUCCESS;
-    if (!(s->hash_table = CDICT_HASHTAB_ALLOC_FN(s, sizeof(*s->hash_table) * CDICT_HASHTAB_SZ))) {
-        s->error_code = CDICT_ERR_OUT_OF_MEMORY;
-        return 0;
-    }
+    s->hash_table = CDICT_HASHTAB_ALLOC_FN(s, sizeof(*s->hash_table) * CDICT_HASHTAB_SZ);
+    CDICT_IF_NULL_SET_ERR_RETURN(s->hash_table, CDICT_ERR_OUT_OF_MEMORY, 0);
     return 1;
 }
 
 CDictItem *cdict_add_pp(CDict *s, CDICT_KEY_T *pkey, CDICT_VAL_T *pval, int if_exists) {
-    CDICT_ASSERT(s);
-    CDICT_ASSERT(pval);
-    CDICT_ASSERT(pkey);
+    CDICT_IF_NULL_RETURN(s, NULL);
+    CDICT_IF_NULL_SET_ERR_RETURN(pkey, CDICT_ERR_PKEY_IS_NULL, NULL);
+    CDICT_IF_NULL_SET_ERR_RETURN(pval, CDICT_ERR_PVAL_IS_NULL, NULL);
     CDictItem *next_collision = NULL;
     CDictItem **ppit = cdict_chain_begin(s, pkey);
+    CDICT_IF_NULL_RETURN(ppit, NULL);
     while (*ppit) {
         int exists = if_exists == CDICT_NO_CHECK ? 0 : !cdict_keycmp(pkey, &(*ppit)->key);
         if (exists) {
@@ -262,23 +282,24 @@ CDictItem *cdict_add_pp(CDict *s, CDICT_KEY_T *pkey, CDICT_VAL_T *pval, int if_e
 }
 
 CDictItem *cdict_add_vv(CDict *s, CDICT_KEY_T key, CDICT_VAL_T val, int if_exists) {
-    CDICT_ASSERT(s);
     return cdict_add_pp(s, &key, &val, if_exists);
 }
 
 CDICT_VAL_T cdict_get_p(CDict *s, CDICT_KEY_T *pkey) {
-    CDICT_ASSERT(s);
-    CDICT_ASSERT(pkey);
-    for (CDictItem **ppit = cdict_chain_begin(s, pkey); *ppit; ppit = cdict_chain_next(ppit)) {
+    CDICT_IF_NULL_RETURN(s, CDICT_VAL_DEFAULT);
+    CDICT_IF_NULL_SET_ERR_RETURN(pkey, CDICT_ERR_PKEY_IS_NULL, CDICT_VAL_DEFAULT);
+    CDictItem **ppit = cdict_chain_begin(s, pkey);
+    CDICT_IF_NULL_RETURN(ppit, CDICT_VAL_DEFAULT);
+    while (*ppit) {
         if (!cdict_keycmp(pkey, &(*ppit)->key)) {
             return (*ppit)->val;
         }
+        ppit = cdict_chain_next(ppit);
     }
-    return NULL;
+    return CDICT_VAL_DEFAULT;
 }
 
 CDICT_VAL_T cdict_get_v(CDict *s, CDICT_KEY_T key) {
-    CDICT_ASSERT(s);
     return cdict_get_p(s, &key);
 }
 
@@ -307,4 +328,6 @@ CDICT_VAL_T cdict_get_v(CDict *s, CDICT_KEY_T key) {
 #undef CDICT_ASSERT_FN
 #undef CDICT_CMP_FN
 #undef CDICT_ASSERT
+#undef CDICT_IF_NULL_RETURN
+#undef CDICT_IF_NULL_SET_ERR_RETURN
 #endif
