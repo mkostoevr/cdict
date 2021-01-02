@@ -42,6 +42,12 @@
 #define cdict_get_p CDICT_FUN(get_p)
 #define cdict_get_v CDICT_FUN(get_v)
 #define cdict_error_message CDICT_FUN(error_message)
+
+#define cdict_hash CDICT_FUN(hash)
+#define cdict_keycmp CDICT_FUN(keycmp)
+#define cdict_chain_begin CDICT_FUN(begin)
+#define cdict_chain_next CDICT_FUN(next)
+
 #define CDictItem CDICT_CAT2(CDictItem, CDICT_CAT2(CDICT_KEY_T, CDICT_VAL_T))
 #define CDictItem_s CDICT_CAT2(CDictItem_s, CDICT_CAT2(CDICT_KEY_T, CDICT_VAL_T))
 #define CDict CDICT_CAT2(CDict, CDICT_CAT2(CDICT_KEY_T, CDICT_VAL_T))
@@ -162,6 +168,10 @@ CDICT_VAL_T cdict_get_v(CDict *s, CDICT_KEY_T key);
 #error "CDICT_HASHTAB_ITEM_FREE_FN should be defiend along with CDICT_HASHTAB_ITEM_ALLOC_FN"
 #endif
 #define CDICT_HASHTAB_ITEM_ALLOCATORS_OVERRIDDEN
+#endif
+
+#ifdef CDICT_HASHTAB_ITEM_ALLOCATORS_OVERRIDDEN
+#error "FUCK!"
 #endif
 
 /// Replacement for assert from <assert.h>
@@ -325,9 +335,16 @@ CDICT_VAL_T cdict_get_v(CDict *s, CDICT_KEY_T key) {
 #undef CDICT_INST
 #undef CDICT_HASH_FN
 #undef CDICT_HASHTAB_SZ
+#undef CDICT_HASHTAB_ALLOC_FN
+#undef CDICT_HASHTAB_ITEM_ALLOC_FN
+#undef CDICT_HASHTAB_ITEM_FREE_FN
 #undef CDICT_ASSERT_FN
 #undef CDICT_CMP_FN
 #undef CDICT_ASSERT
 #undef CDICT_IF_NULL_RETURN
 #undef CDICT_IF_NULL_SET_ERR_RETURN
+#undef CDICT_HASHTAB_ITEM_ALLOCATORS_OVERRIDDEN
+#undef CDICT_HASHTAB_ALLOCATORS_OVERRIDDEN
+#undef CDICT_HASH_FN_OVERRIDEN
+#undef CDICT_CMP_FN_OVERRIDDEN
 #endif
