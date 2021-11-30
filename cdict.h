@@ -106,25 +106,25 @@ typedef struct {
 } CDict;
 
 /// Initializes dictionary structure
-int cdict_init(CDict *s);
+static int cdict_init(CDict *s);
 
 /// Initializes dictionary structure with non-standard user data
-int cdict_init_ud(CDict *s, CDICT_USER_DATA_T user_data);
+static int cdict_init_ud(CDict *s, CDICT_USER_DATA_T user_data);
 
 /// Initializes dictionary structure with non-standard user data
-int cdict_init_pud(CDict *s, CDICT_USER_DATA_T *user_data);
+static int cdict_init_pud(CDict *s, CDICT_USER_DATA_T *user_data);
 
 /// Inserts a value by key (receives pointers to val and key)
-CDictItem *cdict_add_pp(CDict *s, CDICT_KEY_T *pkey, CDICT_VAL_T *pval, int if_exists);
+static CDictItem *cdict_add_pp(CDict *s, CDICT_KEY_T *pkey, CDICT_VAL_T *pval, int if_exists);
 
 /// Inserts a value by key (receives values of val and key)
-CDictItem *cdict_add_vv(CDict *s, CDICT_KEY_T key, CDICT_VAL_T val, int if_exists);
+static CDictItem *cdict_add_vv(CDict *s, CDICT_KEY_T key, CDICT_VAL_T val, int if_exists);
 
 /// Gives a value by key (receives a pointer to key)
-CDICT_VAL_T cdict_get_p(CDict *s, CDICT_KEY_T *pkey);
+static CDICT_VAL_T cdict_get_p(CDict *s, CDICT_KEY_T *pkey);
 
 /// Gives a vaule by key (receives a value of key)
-CDICT_VAL_T cdict_get_v(CDict *s, CDICT_KEY_T key);
+static CDICT_VAL_T cdict_get_v(CDict *s, CDICT_KEY_T key);
 
 #ifdef CDICT_INST
 
@@ -246,15 +246,15 @@ static CDictItem **cdict_chain_next(CDictItem **ppit) {
     return &(*ppit)->next_collision;  
 }
 
-int cdict_init(CDict *s) {
+static int cdict_init(CDict *s) {
     return cdict_init_pud(s, NULL);
 }
 
-int cdict_init_ud(CDict *s, CDICT_USER_DATA_T user_data) {
+static int cdict_init_ud(CDict *s, CDICT_USER_DATA_T user_data) {
     return cdict_init_pud(s, &user_data);
 }
 
-int cdict_init_pud(CDict *s, CDICT_USER_DATA_T *user_data) {
+static int cdict_init_pud(CDict *s, CDICT_USER_DATA_T *user_data) {
     CDICT_IF_NULL_RETURN(s, 0);
     s->user_data = user_data ? *user_data : (CDICT_USER_DATA_T){ 0 };
     s->error_code = CDICT_ERR_SUCCESS;
@@ -263,7 +263,7 @@ int cdict_init_pud(CDict *s, CDICT_USER_DATA_T *user_data) {
     return 1;
 }
 
-CDictItem *cdict_add_pp(CDict *s, CDICT_KEY_T *pkey, CDICT_VAL_T *pval, int if_exists) {
+static CDictItem *cdict_add_pp(CDict *s, CDICT_KEY_T *pkey, CDICT_VAL_T *pval, int if_exists) {
     CDICT_IF_NULL_RETURN(s, NULL);
     CDICT_IF_NULL_SET_ERR_RETURN(pkey, CDICT_ERR_PKEY_IS_NULL, NULL);
     CDICT_IF_NULL_SET_ERR_RETURN(pval, CDICT_ERR_PVAL_IS_NULL, NULL);
@@ -291,11 +291,11 @@ CDictItem *cdict_add_pp(CDict *s, CDICT_KEY_T *pkey, CDICT_VAL_T *pval, int if_e
     return pit;
 }
 
-CDictItem *cdict_add_vv(CDict *s, CDICT_KEY_T key, CDICT_VAL_T val, int if_exists) {
+static CDictItem *cdict_add_vv(CDict *s, CDICT_KEY_T key, CDICT_VAL_T val, int if_exists) {
     return cdict_add_pp(s, &key, &val, if_exists);
 }
 
-CDICT_VAL_T cdict_get_p(CDict *s, CDICT_KEY_T *pkey) {
+static CDICT_VAL_T cdict_get_p(CDict *s, CDICT_KEY_T *pkey) {
     CDICT_IF_NULL_RETURN(s, CDICT_VAL_DEFAULT);
     CDICT_IF_NULL_SET_ERR_RETURN(pkey, CDICT_ERR_PKEY_IS_NULL, CDICT_VAL_DEFAULT);
     CDictItem **ppit = cdict_chain_begin(s, pkey);
@@ -309,7 +309,7 @@ CDICT_VAL_T cdict_get_p(CDict *s, CDICT_KEY_T *pkey) {
     return CDICT_VAL_DEFAULT;
 }
 
-CDICT_VAL_T cdict_get_v(CDict *s, CDICT_KEY_T key) {
+static CDICT_VAL_T cdict_get_v(CDict *s, CDICT_KEY_T key) {
     return cdict_get_p(s, &key);
 }
 
