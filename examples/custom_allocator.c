@@ -26,7 +26,7 @@ typedef struct {
 #define CDICT_HASHTAB_ITEM_ALLOC_FN(cdict, size) item_alloc(cdict, size)
 #define CDICT_HASHTAB_ITEM_FREE_FN(cdict, ptr) item_free(cdict, ptr)
 #define CDICT_HASHTAB_ALLOC_FN(cdict, size) hashtab_alloc(cdict, size)
-#include "cdict.h"
+#include "../cdict.h"
 
 //
 // Sequential allocator for items (fixed sized and does not free)

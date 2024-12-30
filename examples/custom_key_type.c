@@ -11,7 +11,7 @@
 #define CDICT_KEY_T char
 #define CDICT_HASH_FN(pkey) my_hash(pkey)
 #define CDICT_CMP_FN(pkey0, pkey1) my_cmp(pkey0, pkey1)
-#include "cdict.h"
+#include "../cdict.h"
 
 unsigned long my_hash(char *pkey) {
 	return *pkey;

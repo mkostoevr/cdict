@@ -4,7 +4,7 @@
 #include <string.h>
 
 #define CDICT_INST
-#include "cdict.h"
+#include "../cdict.h"
 
 int main(int argc, char **argv) {
 	CDict_CStr_CStr d;
