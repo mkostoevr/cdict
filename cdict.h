@@ -170,10 +170,6 @@ static CDICT_VAL_T cdict_get_v(CDict *s, CDICT_KEY_T key);
 #define CDICT_HASHTAB_ITEM_ALLOCATORS_OVERRIDDEN
 #endif
 
-#ifdef CDICT_HASHTAB_ITEM_ALLOCATORS_OVERRIDDEN
-#error "FUCK!"
-#endif
-
 /// Replacement for assert from <assert.h>
 #ifndef CDICT_ASSERT_FN
 #include <assert.h>
@@ -243,7 +239,7 @@ static CDictItem **cdict_chain_begin(CDict *s, CDICT_KEY_T *pkey) {
 static CDictItem **cdict_chain_next(CDictItem **ppit) {
     CDICT_ASSERT(ppit);
     CDICT_ASSERT(*ppit);
-    return &(*ppit)->next_collision;  
+    return &(*ppit)->next_collision;
 }
 
 static int cdict_init(CDict *s) {
