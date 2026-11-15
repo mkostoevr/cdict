@@ -222,10 +222,13 @@ int CDICT_CMP_FN(CDICT_KEY_T *pkey0, CDICT_KEY_T *pkey1);
 //
 
 static inline size_t cdict_hash(CDICT_KEY_T *pkey) {
+    CDICT_ASSERT(*pkey);
     return CDICT_HASH_FN(CDICT_ASSERT(pkey)) & (CDICT_HASHTAB_SZ - 1);
 }
 
 static inline int cdict_keycmp(CDICT_KEY_T *pkey0, CDICT_KEY_T *pkey1) {
+    CDICT_ASSERT(*pkey0);
+    CDICT_ASSERT(*pkey1);
     return CDICT_CMP_FN(CDICT_ASSERT(pkey0), CDICT_ASSERT(pkey1));
 }
 
