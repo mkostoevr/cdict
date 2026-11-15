@@ -140,7 +140,7 @@ static CDICT_VAL_T cdict_get_v(CDict *s, CDICT_KEY_T key);
 /// Hashing function for the key type
 #ifndef CDICT_HASH_FN
 #include <string.h>
-#define CDICT_HASH_FN(pkey) strlen(*pkey) ^ (*pkey)[0]
+#define CDICT_HASH_FN(pkey) (strlen(*pkey) ^ (*pkey)[0])
 #else
 #define CDICT_HASH_FN_OVERRIDEN
 #endif
