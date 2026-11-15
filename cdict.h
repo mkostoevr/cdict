@@ -188,7 +188,7 @@ static inline CDICT_VAL_T cdict_get_v(CDict *s, CDICT_KEY_T key);
 // Internal macros (instantiation edition)
 //
 
-#define CDICT_ASSERT(x) ({ CDICT_ASSERT_FN(x); x; })
+#define CDICT_ASSERT(x) do { CDICT_ASSERT_FN(x); } while (0)
 // Should write the error code into strucure, but should not rewrite it's already set
 #define CDICT_IF_NULL_SET_ERR_RETURN(x, ec, res) if (x == NULL) {   \
         if (s->error_code == CDICT_ERR_SUCCESS) s->error_code = ec; \
@@ -223,18 +223,22 @@ int CDICT_CMP_FN(CDICT_KEY_T *pkey0, CDICT_KEY_T *pkey1);
 
 static inline size_t cdict_hash(CDICT_KEY_T *pkey) {
     CDICT_ASSERT(*pkey);
-    return CDICT_HASH_FN(CDICT_ASSERT(pkey)) & (CDICT_HASHTAB_SZ - 1);
+    CDICT_ASSERT(pkey);
+    return CDICT_HASH_FN(pkey) & (CDICT_HASHTAB_SZ - 1);
 }
 
 static inline int cdict_keycmp(CDICT_KEY_T *pkey0, CDICT_KEY_T *pkey1) {
     CDICT_ASSERT(*pkey0);
     CDICT_ASSERT(*pkey1);
-    return CDICT_CMP_FN(CDICT_ASSERT(pkey0), CDICT_ASSERT(pkey1));
+    CDICT_ASSERT(pkey0);
+    CDICT_ASSERT(pkey1);
+    return CDICT_CMP_FN(pkey0, pkey1);
 }
 
 static inline CDictItem **cdict_chain_begin(CDict *s, CDICT_KEY_T *pkey) {
     CDICT_ASSERT(s);
-    size_t hash = cdict_hash(CDICT_ASSERT(pkey));
+    CDICT_ASSERT(pkey);
+    size_t hash = cdict_hash(pkey);
     CDICT_IF_NULL_SET_ERR_RETURN(s->hash_table, CDICT_ERR_HASH_TABLE_IS_NULL, NULL);
     return &s->hash_table[hash];
 }
