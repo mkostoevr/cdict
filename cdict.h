@@ -287,6 +287,7 @@ static inline CDictItem *cdict_add_pp(CDict *s, CDICT_KEY_T *pkey, CDICT_VAL_T *
         ppit = cdict_chain_next(ppit);
     }
     *ppit = CDICT_HASHTAB_ITEM_ALLOC_FN(s, sizeof(**ppit));
+    CDICT_IF_NULL_SET_ERR_RETURN(*ppit, CDICT_ERR_OUT_OF_MEMORY, NULL);
     CDictItem *pit = *ppit;
     pit->key = *pkey;
     pit->val = *pval;
